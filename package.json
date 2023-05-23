@@ -36,7 +36,9 @@
   "dependencies": {
     "@emotion/react": "^11.10.5",
     "@emotion/styled": "^11.10.5",
+    "@juxt/pass": "^1.1.6",
     "@mui/material": "^5.11.0",
+    "@tanstack/react-location": "^3.7.4",
     "@tanstack/react-query": "^4.29.7",
     "@tanstack/react-query-devtools": "^4.29.7",
     "@visx/axis": "latest",
@@ -49,10 +51,12 @@
     "@visx/responsive": "latest",
     "@visx/scale": "latest",
     "@visx/shape": "latest",
+    "axios": "^1.4.0",
     "d3-array": "^2.4.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.41.0",
+    "react-json-view": "^1.21.3",
     "react-query": "^3.39.3",
     "typescript": "^4.9.4"
   }

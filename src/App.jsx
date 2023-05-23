@@ -1,58 +1,51 @@
-import { useState as react_useState, useEffect as react_useEffect } from 'react'
-import {  } from './VisxExample'
-import {  } from '@mui/material/Box'
-import {  } from '@mui/material/Button'
-import {  } from '@mui/material/TextField'
-import {  } from '@mui/material/Typography'
-import { first, atom, reset_BANG_, shuffle, remove, get, rand_int, nth, deref } from 'squint-cljs/core.js'
-import Visx from './VisxExample';
+import { useState as react_useState } from 'react'
+import {  } from 'axios'
+import {  } from 'react-json-view'
+import { str, get, nth } from 'squint-cljs/core.js'
+import { registerOAuth2Worker, authorize } from '@juxt/pass';
 import { useQuery } from '@tanstack/react-query';
-import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
-import TextField from '@mui/material/TextField';
-import Typography from '@mui/material/Typography';
-var animalsData = [({ "sound": "Moo Moo", "animal2": "Cow", "language": "English" }), ({ "sound": "Miau Miau", "animal": "Cat", "language": "Spanish" }), ({ "sound": "Bark Bark", "animal": "Dog", "language": "German" })]
+import { useSearch } from '@tanstack/react-location';
+import axios from 'axios';
+import ReactJson from 'react-json-view';
+registerOAuth2Worker();
+var resource_server = "https://home.juxt.site"
 ;
-var testatom = atom(null)
+var authorization_server = "https://auth.home.juxt.site"
 ;
-var Game = function (p__1) {
-let map__23 = p__1;
-let sound4 = get(map__23, "sound");
-let animal5 = get(map__23, "animal");
-let language6 = get(map__23, "language");
-let vec__710 = react_useState("");
-let guess11 = nth(vec__710, 0, null);
-let set_guess12 = nth(vec__710, 1, null);
-let correct_QMARK_13 = (animal5 === guess11);
-let test14 = deref(testatom);
-react_useEffect(function () {
-return set_guess12("");
-}, [test14]);
-return <Box><div class="hello???" variant="h4">What animal is this?</div> <div>hi  {deref(testatom)}</div> <Typography variant="h6">{sound4}</Typography> <TextField label="Animal" value={guess11} onChange={function (_PERCENT_1) {
-return set_guess12(get(get(_PERCENT_1, "target"), "value"));
-}}></TextField> {(correct_QMARK_13) ? (<Typography variant="h4">Correct!</Typography>) : (null)}</Box>;
+var app_server = "https://surveyor.apps.com"
+;
+var authorize_callback = function () {
+return authorize(({ "origin": resource_server, "client_id": "insite", "authorization_endpoint": str(authorization_server, "/oauth/authorize"), "token_endpoint": str(authorization_server, "/oauth/token"), "redirect_uri": str(app_server, "/oauth-redirect.html"), "request_scopes": [] }));
+}
+;
+var useWhoami = function (enabled) {
+let _search1 = useSearch();
+return useQuery(({ "queryKey": ["stacktrace"], "retry": 0, "enabled": enabled, "queryFn": function () {
+return axios.get("https://home.juxt.site/_site/whoami", ({ "headers": ({ "accept": "application/json" }) })).then(function (response) {
+return response["data"];
+});
+} }));
+}
+;
+var Error = function (error) {
+if ((401 === get(get(error, "response"), "status"))) {
+return <div><button onClick={authorize_callback}>Login</button></div>;} else {
+return <div>something went wrong! <ReactJson src={error}></ReactJson></div>;}
 }
 ;
 var App = function () {
-let vec__1519 = react_useState(first(shuffle(animalsData)));
-let animal20 = nth(vec__1519, 0, null);
-let set_animal21 = nth(vec__1519, 1, null);
-let map__1822 = useQuery(({ "queryKey": ["animals"], "queryFn": function () {
-return fetch("https://jsonplaceholder.typicode.com/todos/1").then(function (response) {
-return response.json();
-});
-} }));
-let data23 = get(map__1822, "data");
-let isLoading24 = get(map__1822, "isLoading");
-return <Box sx={({ "display": "flex", "flexDirection": "column", "alignItems": "center", "justifyContent": "center" })}><Box sx={({ "display": "flex", "flexDirection": "column", "gap": "1rem", "alignItems": "center", "justifyContent": "center", "width": "100%" })}>{(isLoading24) ? (<Typography variant="h1">Loading...</Typography>) : (<Typography variant="h1">{get(data23, "title")}</Typography>)} <Game {...animal20}></Game> <Visx width={400} height={400}></Visx> <Button variant="contained" color="primary" onClick={function () {
-reset_BANG_(testatom, rand_int(100));
-return set_animal21(first(shuffle(remove(function (p__25) {
-let map__2627 = p__25;
-let sound28 = get(map__2627, "sound");
-return (sound28 === get(animal20, "sound"));
-}, animalsData))));
-}}>New Game</Button></Box></Box>;
+let vec__26 = react_useState(false);
+let enabled7 = nth(vec__26, 0, null);
+let setEnabled8 = nth(vec__26, 1, null);
+let map__59 = useWhoami(enabled7);
+let data10 = get(map__59, "data");
+let isFetching11 = get(map__59, "isFetching");
+let isError12 = get(map__59, "isError");
+let error13 = get(map__59, "error");
+return <div>{<button onClick={function () {
+return setEnabled8(true);
+}}>Fetch</button>} <button onClick={authorize_callback}>Login</button> {(isFetching11) ? (<div>Loading...</div>) : ((isError12) ? (<Error {...error13}></Error>) : ((data10) ? (<div><ReactJson src={data10}></ReactJson></div>) : (("else") ? (<div>This should never happen!</div>) : (null))))}</div>;
 }
 ;
 
-export { animalsData, testatom, Game, App }
+export { resource_server, authorization_server, app_server, authorize_callback, useWhoami, Error, App }

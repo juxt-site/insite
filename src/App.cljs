@@ -1,75 +1,61 @@
 (ns App
-  (:require ["react" :as react]
-            ["./VisxExample$default" :as Visx]
+  (:require ["@juxt/pass" :refer [registerOAuth2Worker, authorize]]
+            ["react" :as react]
             ["@tanstack/react-query" :refer [useQuery]]
-            ["@mui/material/Box$default" :as Box]
-            ["@mui/material/Button$default" :as Button]
-            ["@mui/material/TextField$default" :as TextField]
-            ["@mui/material/Typography$default" :as Typography]))
+            ["@tanstack/react-location" :refer [useSearch]]
+            ["axios$default" :as axios]
+            ["react-json-view$default" :as ReactJson]))
 
-(def animalsData [{:sound "Moo Moo"
-                   :animal2 "Cow"
-                   :language "English"}
-                  {:sound "Miau Miau"
-                   :animal "Cat"
-                   :language "Spanish"}
-                  {:sound "Bark Bark"
-                   :animal "Dog"
-                   :language "German"}])
+(registerOAuth2Worker)
 
-(def testatom (atom nil))
+(def resource-server "https://home.juxt.site")
+(def authorization-server "https://auth.home.juxt.site")
+(def app-server "https://surveyor.apps.com")
 
-(defn Game [{:keys [sound animal language]}]
-  (let [[guess set-guess] (react/useState "")
-        correct? (= animal guess)
-        test @testatom]
-    (react/useEffect
-     (fn []
-       (set-guess ""))
-     [test])
-    #jsx [Box
-          [:div {:class "hello???" :variant "h4"} "What animal is this?"]
-          [:div "hi " @testatom]
-          [Typography {:variant "h6"} sound]
-          [TextField {:label "Animal"
-                      :value guess
-                      :onChange #(set-guess (-> % :target :value))}]
-          (when correct?
-            #jsx [Typography {:variant "h4"} "Correct!"])]))
+(defn authorize-callback []
+  (authorize
+   {:origin resource-server
+    :client_id "insite"
+    :authorization_endpoint (str authorization-server "/oauth/authorize")
+    :token_endpoint (str authorization-server "/oauth/token")
+    :redirect_uri (str app-server "/oauth-redirect.html")
+    :request_scopes []}))
+
+(defn useWhoami [enabled]
+  (let [_search (useSearch)]
+    (useQuery {:queryKey ["stacktrace"]
+               :retry 0
+               :enabled enabled
+               :queryFn (fn []
+                          (.then (.get axios "https://home.juxt.site/_site/whoami"
+                                       {:headers {:accept "application/json"}})
+                                 (fn [response]
+                                   (.-data response))))})))
+
+(defn Error [error]
+  (if (= 401 (-> error :response :status))
+    #jsx [:div [:button {:onClick authorize-callback} "Login"]]
+    #jsx [:div "something went wrong!" [ReactJson {:src error}]]))
+
+
 
 (defn App []
-  (let [[animal set-animal] (react/useState (first (shuffle animalsData)))
-        {:keys [data isLoading]}
-        (useQuery {:queryKey ["animals"]
-                   :queryFn (fn []
-                              (.then (js/fetch "https://jsonplaceholder.typicode.com/todos/1")
-                                     (fn [response]
-                                       (.json response))))})]
-    #jsx [Box {:sx {:display "flex"
-                    :flexDirection "column"
-                    :alignItems "center"
-                    :justifyContent "center"}}
-          [Box
-           {:sx {:display "flex"
-                 :flexDirection "column"
-                 :gap "1rem"
-                 :alignItems "center"
-                 :justifyContent "center"
-                 :width "100%"}}
-           (if isLoading
-             #jsx [Typography {:variant "h1"} "Loading..."]
-             #jsx
-              [Typography {:variant "h1"} (:title data)])
-           [Game {:& animal}]
-           [Visx {:width 400
-                  :height 400}]
-           [Button {:variant "contained"
-                    :color "primary"
-                    :onClick #(do
-                                (reset! testatom (rand-int 100))
-                                (set-animal (first (shuffle (remove
-                                                             (fn [{:keys [sound]}]
-                                                               (= sound (:sound animal)))
-                                                             animalsData)))))}
-            "New Game"]]]))
+  (let [[enabled setEnabled] (react/useState false)
+        {:keys [data isFetching isError error]} (useWhoami enabled)]
+    #jsx [:div
+          #jsx [:button {:onClick #(setEnabled true)} "Fetch"]
+          [:button {:onClick authorize-callback} "Login"]
+          (cond
+            isFetching
+            #jsx [:div "Loading..."]
+            isError
+            #jsx [Error {:& error}]
+            data
+            #jsx [:div [ReactJson {:src data}]]
+            :else
+            #jsx [:div "This should never happen!"])]))
+
+
+
+
 
