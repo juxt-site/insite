@@ -1,7 +1,7 @@
-import { useState as react_useState } from 'react'
+import {  } from 'react'
 import {  } from 'axios'
 import {  } from 'react-json-view'
-import { str, get, nth } from 'squint-cljs/core.js'
+import { str, get } from 'squint-cljs/core.js'
 import { registerOAuth2Worker, authorize } from '@juxt/pass';
 import { useQuery } from '@tanstack/react-query';
 import { useSearch } from '@tanstack/react-location';
@@ -14,13 +14,14 @@ var authorization_server = "https://auth.home.juxt.site"
 ;
 var app_server = "https://surveyor.apps.com"
 ;
+111;
 var authorize_callback = function () {
-return authorize(({ "origin": resource_server, "client_id": "insite", "authorization_endpoint": str(authorization_server, "/oauth/authorize"), "token_endpoint": str(authorization_server, "/oauth/token"), "redirect_uri": str(app_server, "/oauth-redirect.html"), "request_scopes": [] }));
+return authorize(({ "origin": resource_server, "client_id": "insite", "authorization_endpoint": str(authorization_server, "/oauth/authorize"), "token_endpoint": str(authorization_server, "/oauth/token"), "redirect_uri": str(app_server, "/oauth-redirect.html") }));
 }
 ;
-var useWhoami = function (enabled) {
+var useWhoami = function () {
 let _search1 = useSearch();
-return useQuery(({ "queryKey": ["stacktrace"], "retry": 0, "enabled": enabled, "queryFn": function () {
+return useQuery(({ "queryKey": ["stacktrace"], "retry": 0, "queryFn": function () {
 return axios.get("https://home.juxt.site/_site/whoami", ({ "headers": ({ "accept": "application/json" }) })).then(function (response) {
 return response["data"];
 });
@@ -29,22 +30,17 @@ return response["data"];
 ;
 var Error = function (error) {
 if ((401 === get(get(error, "response"), "status"))) {
-return <div><button onClick={authorize_callback}>Login</button></div>;} else {
+return <div><button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" onClick={authorize_callback}>Login</button></div>;} else {
 return <div>something went wrong! <ReactJson src={error}></ReactJson></div>;}
 }
 ;
 var App = function () {
-let vec__26 = react_useState(false);
-let enabled7 = nth(vec__26, 0, null);
-let setEnabled8 = nth(vec__26, 1, null);
-let map__59 = useWhoami(enabled7);
-let data10 = get(map__59, "data");
-let isFetching11 = get(map__59, "isFetching");
-let isError12 = get(map__59, "isError");
-let error13 = get(map__59, "error");
-return <div>{<button onClick={function () {
-return setEnabled8(true);
-}}>Fetch</button>} <button onClick={authorize_callback}>Login</button> {(isFetching11) ? (<div>Loading...</div>) : ((isError12) ? (<Error {...error13}></Error>) : ((data10) ? (<div><ReactJson src={data10}></ReactJson></div>) : (("else") ? (<div>This should never happen!</div>) : (null))))}</div>;
+let map__23 = useWhoami();
+let data4 = get(map__23, "data");
+let isFetching5 = get(map__23, "isFetching");
+let isError6 = get(map__23, "isError");
+let error7 = get(map__23, "error");
+return <div class="min-h-screen flex justify-center items-center text-white">{(isFetching5) ? (<div><img class="animate-spin" width="50px" src="/spinner.svg"></img></div>) : ((isError6) ? (<Error {...error7}></Error>) : ((data4) ? (<div><ReactJson src={data4} theme="twilight" name={false} collapsed={2}></ReactJson></div>) : (("else") ? (<div>This should never happen!</div>) : (null))))}</div>;
 }
 ;
 
