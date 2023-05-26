@@ -14,7 +14,6 @@ var authorization_server = "https://auth.home.juxt.site"
 ;
 var app_server = "https://surveyor.apps.com"
 ;
-111;
 var authorize_callback = function () {
 return authorize(({ "origin": resource_server, "client_id": "insite", "authorization_endpoint": str(authorization_server, "/oauth/authorize"), "token_endpoint": str(authorization_server, "/oauth/token"), "redirect_uri": str(app_server, "/oauth-redirect.html") }));
 }

@@ -11,7 +11,7 @@
 (def resource-server "https://home.juxt.site")
 (def authorization-server "https://auth.home.juxt.site")
 (def app-server "https://surveyor.apps.com")
-111
+
 (defn authorize-callback []
   (authorize
    {:origin resource-server
