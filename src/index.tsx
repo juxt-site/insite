@@ -21,3 +21,6 @@ root.render(
     </QueryClientProvider>
   </StrictMode>,
 );
+
+const siteId = window.location.pathname.split('/')[1];
+console.log('siteId', siteId);

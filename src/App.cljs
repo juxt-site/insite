@@ -1,6 +1,7 @@
 (ns App
   (:require ["@juxt/pass" :refer [registerOAuth2Worker, authorize]]
             ["react" :as react]
+            ["react-hook-form" :refer [useForm]]
             ["@tanstack/react-query" :refer [useQuery]]
             ["@tanstack/react-location" :refer [useSearch]]
             ["axios$default" :as axios]
@@ -8,11 +9,11 @@
 
 (registerOAuth2Worker)
 
-(def resource-server "https://home.juxt.site")
-(def authorization-server "https://auth.home.juxt.site")
-(def app-server "https://surveyor.apps.com")
+(def authorization-server "http://localhost:4440")
+(def app-server "http://localhost:3000")
 
-(defn authorize-callback []
+(defn authorize-callback
+  [resource-server]
   (authorize
    {:origin resource-server
     :client_id "insite"
@@ -20,27 +21,26 @@
     :token_endpoint (str authorization-server "/oauth/token")
     :redirect_uri (str app-server "/oauth-redirect.html")}))
 
-(defn useWhoami []
+(defn useWhoami
+  [resource-server]
   (let [_search (useSearch)]
     (useQuery {:queryKey ["stacktrace"]
                :retry 0
                :queryFn (fn []
-                          (.then (.get axios "https://home.juxt.site/_site/whoami"
+                          (.then (.get axios (str resource-server "/_site/whoami")
                                        {:headers {:accept "application/json"}})
                                  (fn [response]
                                    (.-data response))))})))
 
 (defn Error [error]
-  (if (= 401 (-> error :response :status))
-    #jsx [:div [:button {:class "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-                         :onClick authorize-callback} "Login"]]
-    #jsx [:div "something went wrong!" [ReactJson {:src error}]]))
+  #jsx [:div "something went wrong!" [ReactJson {:src error}]])
 
-(defn App []
-  (let [{:keys [data isFetching isError error]} (useWhoami)]
+(defn MeJson 
+  [{:keys [resource-server]}]
+  (let [{:keys [data  isLoading isError error]} (useWhoami resource-server)]
     #jsx [:div {:class "min-h-screen flex justify-center items-center text-white"}
           (cond
-            isFetching
+            isLoading 
             #jsx [:div [:img  {:class "animate-spin"
                                :width "50px"
                                :src "/spinner.svg"}]]
@@ -51,7 +51,16 @@
             :else
             #jsx [:div "This should never happen!"])]))
 
-
+(defn App
+  []
+  (let [{:keys [register handleSubmit]} (useForm)]
+    #jsx
+     [:div {:className "flex justify-center items-center"}
+      [:input {:& (register "resourceServer")
+               :className "input"
+               :defaultValue "http://localhost:4444"}]
+      [:button {:className "btn" :onClick (handleSubmit (fn [data] (store-si (:resourceServer data))))} "Submit"]
+      [MeJson {:resource-server "http://localhost:4444"}]]))
 
 
 
