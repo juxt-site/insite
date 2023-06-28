@@ -1,9 +1,8 @@
 (ns App
   (:require ["@juxt/pass" :refer [registerOAuth2Worker, authorize]]
-            ["react" :as react]
             ["react-hook-form" :refer [useForm]]
             ["@tanstack/react-query" :refer [useQuery]]
-            ["@tanstack/react-location" :refer [useSearch]]
+            ["./hooks/site-config" :refer [useSiteURL]]
             ["axios$default" :as axios]
             ["react-json-view$default" :as ReactJson]))
 
@@ -23,25 +22,24 @@
 
 (defn useWhoami
   [resource-server]
-  (let [_search (useSearch)]
-    (useQuery {:queryKey ["stacktrace"]
-               :retry 0
-               :queryFn (fn []
-                          (.then (.get axios (str resource-server "/_site/whoami")
-                                       {:headers {:accept "application/json"}})
-                                 (fn [response]
-                                   (.-data response))))})))
+  (useQuery {:queryKey ["stacktrace"]
+             :retry 0
+             :queryFn (fn []
+                        (.then (.get axios (str resource-server "/_site/whoami")
+                                     {:headers {:accept "application/json"}})
+                               (fn [response]
+                                 (.-data response))))}))
 
 (defn Error [error]
   #jsx [:div "something went wrong!" [ReactJson {:src error}]])
 
-(defn MeJson 
+(defn MeJson
   [{:keys [resource-server]}]
   (let [{:keys [data  isLoading isError error]} (useWhoami resource-server)]
-    #jsx [:div {:class "min-h-screen flex justify-center items-center text-white"}
+    #jsx [:div {:className "min-h-screen flex justify-center items-center text-white"}
           (cond
-            isLoading 
-            #jsx [:div [:img  {:class "animate-spin"
+            isLoading
+            #jsx [:div [:img  {:className "animate-spin"
                                :width "50px"
                                :src "/spinner.svg"}]]
             isError
@@ -53,14 +51,18 @@
 
 (defn App
   []
-  (let [{:keys [register handleSubmit]} (useForm)]
+  (let [{:keys [register handleSubmit]} (useForm)
+        [site-url set-url] (useSiteURL)]
     #jsx
      [:div {:className "flex justify-center items-center"}
       [:input {:& (register "resourceServer")
                :className "input"
                :defaultValue "http://localhost:4444"}]
-      [:button {:className "btn" :onClick (handleSubmit (fn [data] (store-si (:resourceServer data))))} "Submit"]
-      [MeJson {:resource-server "http://localhost:4444"}]]))
+      [:button {:className "btn" :onClick (handleSubmit (fn [data]
+                                                          (authorize-callback (:resourceServer data))
+                                                          (set-url (:resourceServer data))))} "Submit"]
+      (when site-url
+       #jsx [MeJson {:resource-server site-url}])]))
 
 
 

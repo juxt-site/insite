@@ -1,11 +1,10 @@
-import {  } from 'react'
 import {  } from 'axios'
 import {  } from 'react-json-view'
-import { str, get } from 'squint-cljs/core.js'
+import { str, get, nth } from 'squint-cljs/core.js'
 import { registerOAuth2Worker, authorize } from '@juxt/pass';
 import { useForm } from 'react-hook-form';
 import { useQuery } from '@tanstack/react-query';
-import { useSearch } from '@tanstack/react-location';
+import { useSiteURL } from './hooks/site-config';
 import axios from 'axios';
 import ReactJson from 'react-json-view';
 registerOAuth2Worker();
@@ -18,7 +17,6 @@ return authorize(({ "origin": resource_server, "client_id": "insite", "authoriza
 }
 ;
 var useWhoami = function (resource_server) {
-let _search1 = useSearch();
 return useQuery(({ "queryKey": ["stacktrace"], "retry": 0, "queryFn": function () {
 return axios.get(str(resource_server, "/_site/whoami"), ({ "headers": ({ "accept": "application/json" }) })).then(function (response) {
 return response["data"];
@@ -30,24 +28,28 @@ var Error = function (error) {
 return <div>something went wrong! <ReactJson src={error}></ReactJson></div>;
 }
 ;
-var MeJson = function (p__2) {
-let map__34 = p__2;
-let resource_server5 = get(map__34, "resource-server");
-let map__67 = useWhoami(resource_server5);
-let data8 = get(map__67, "data");
-let isLoading9 = get(map__67, "isLoading");
-let isError10 = get(map__67, "isError");
-let error11 = get(map__67, "error");
-return <div class="min-h-screen flex justify-center items-center text-white">{(isLoading9) ? (<div><img class="animate-spin" width="50px" src="/spinner.svg"></img></div>) : ((isError10) ? (<Error {...error11}></Error>) : ((data8) ? (<div><ReactJson src={data8} theme="twilight" name={false} collapsed={2}></ReactJson></div>) : (("else") ? (<div>This should never happen!</div>) : (null))))}</div>;
+var MeJson = function (p__1) {
+let map__23 = p__1;
+let resource_server4 = get(map__23, "resource-server");
+let map__56 = useWhoami(resource_server4);
+let data7 = get(map__56, "data");
+let isLoading8 = get(map__56, "isLoading");
+let isError9 = get(map__56, "isError");
+let error10 = get(map__56, "error");
+return <div className="min-h-screen flex justify-center items-center text-white">{(isLoading8) ? (<div><img className="animate-spin" width="50px" src="/spinner.svg"></img></div>) : ((isError9) ? (<Error {...error10}></Error>) : ((data7) ? (<div><ReactJson src={data7} theme="twilight" name={false} collapsed={2}></ReactJson></div>) : (("else") ? (<div>This should never happen!</div>) : (null))))}</div>;
 }
 ;
 var App = function () {
-let map__1213 = useForm();
-let register14 = get(map__1213, "register");
-let handleSubmit15 = get(map__1213, "handleSubmit");
-return <div className="flex justify-center items-center"><input {...register14("resourceServer")} className="input" defaultValue="http://localhost:4444"></input> <button className="btn" onClick={handleSubmit15(function (data) {
-return store_si(get(data, "resourceServer"));
-})}>Submit</button> <MeJson resource-server="http://localhost:4444"></MeJson></div>;
+let map__1115 = useForm();
+let register16 = get(map__1115, "register");
+let handleSubmit17 = get(map__1115, "handleSubmit");
+let vec__1218 = useSiteURL();
+let site_url19 = nth(vec__1218, 0, null);
+let set_url20 = nth(vec__1218, 1, null);
+return <div className="flex justify-center items-center"><input {...register16("resourceServer")} className="input" defaultValue="http://localhost:4444"></input> <button className="btn" onClick={handleSubmit17(function (data) {
+authorize_callback(data);
+return set_url20(get(data, "resourceServer"));
+})}>Submit</button> {(site_url19) ? (<MeJson resource-server={site_url19}></MeJson>) : (null)}</div>;
 }
 ;
 
